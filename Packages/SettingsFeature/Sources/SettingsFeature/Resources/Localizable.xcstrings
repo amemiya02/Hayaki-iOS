@@ -1583,6 +1583,125 @@
       },
       "extractionState" : "manual"
     },
+    "Choose from Files" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイルから選択"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从文件中选择"
+          }
+        }
+      },
+      "extractionState" : "manual"
+    },
+    "Decks show over the image on translucent rows." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "デッキは画像の上に半透明の行で表示されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "牌组以半透明行显示在图像上方。"
+          }
+        }
+      },
+      "extractionState" : "manual"
+    },
+    "No background image" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背景画像なし"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无背景图像"
+          }
+        }
+      },
+      "extractionState" : "manual"
+    },
+    "Background image preview" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背景画像のプレビュー"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背景图像预览"
+          }
+        }
+      },
+      "extractionState" : "manual"
+    },
+    "Image Dimming" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画像の暗さ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图像遮罩"
+          }
+        }
+      },
+      "extractionState" : "manual"
+    },
+    "Deck Row Opacity" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "デッキ行の不透明度"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "牌组行不透明度"
+          }
+        }
+      },
+      "extractionState" : "manual"
+    },
+    "Reset Transparency" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "透明度をリセット"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置透明度"
+          }
+        }
+      },
+      "extractionState" : "manual"
+    },
     "Choose Background Image" : {
       "localizations" : {
         "ja" : {

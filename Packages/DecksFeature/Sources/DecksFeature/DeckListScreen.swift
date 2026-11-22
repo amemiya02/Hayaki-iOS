@@ -30,6 +30,8 @@ public struct DeckListScreen<SyncControl: View>: View {
     @State private var selectedDeckID: DeckNode.ID?
     @AppStorage(DeckBackground.revisionKey) private var backgroundRevision = ""
     @State private var backgroundImage: CGImage?
+    @AppStorage(DeckBackgroundStyle.dimmingKey) private var backgroundDimming = DeckBackgroundStyle.defaultDimming
+    @AppStorage(DeckBackgroundStyle.rowOpacityKey) private var rowOpacity = DeckBackgroundStyle.defaultRowOpacity
     @Environment(\.scenePhase) private var scenePhase
     private let store: CollectionStore
     private let profileID: UUID?
@@ -181,11 +183,13 @@ public struct DeckListScreen<SyncControl: View>: View {
                     onStudyAll: studyAll,
                     onStudy: study
                 )
+                .deckRowBackground()
                 ForEach(model.decks) { deck in
                     DeckRows(deck: deck, selectedDeckID: selection, study: study)
                 }
             }
             .scrollContentBackground(.hidden)
+            .environment(\.deckRowOpacity, backgroundImage == nil ? nil : rowOpacity)
             .refreshable { await model.refresh() }
             .environment(model)
         }
@@ -199,7 +203,7 @@ public struct DeckListScreen<SyncControl: View>: View {
                     .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
-                    .overlay(HayakiBackground(.grouped).opacity(0.65))
+                    .overlay(HayakiBackground(.grouped).opacity(backgroundDimming))
             } else {
                 HayakiBackground(.grouped)
             }
@@ -490,6 +494,7 @@ private struct DeckRows: View {
         if deck.children.isEmpty {
             row
                 .deckActions(for: deck)
+                .deckRowBackground()
         } else {
             DisclosureGroup(isExpanded: isExpanded) {
                 ForEach(deck.children) { child in
@@ -499,6 +504,7 @@ private struct DeckRows: View {
                 row
                     .deckActions(for: deck)
             }
+            .deckRowBackground()
         }
     }
 
@@ -601,5 +607,30 @@ public extension DeckListScreen where SyncControl == EmptyView {
         presentation: Binding<DeckPresentation?> = .constant(nil)
     ) {
         self.init(store: store, profileID: profileID, presentation: presentation) { EmptyView() }
+    }
+}
+
+extension EnvironmentValues {
+    /// How solid deck rows are over the learner's background image, or nil
+    /// with no image.
+    @Entry var deckRowOpacity: Double?
+}
+
+/// Rows the background image shows through, when one is chosen.
+private struct DeckRowBackground: ViewModifier {
+    @Environment(\.deckRowOpacity) private var opacity
+
+    func body(content: Content) -> some View {
+        if let opacity {
+            content.listRowBackground(DeckRowSurface(opacity: opacity))
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    fileprivate func deckRowBackground() -> some View {
+        modifier(DeckRowBackground())
     }
 }

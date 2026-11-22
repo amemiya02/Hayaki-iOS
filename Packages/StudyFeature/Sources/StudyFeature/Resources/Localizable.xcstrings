@@ -1,6 +1,23 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Next review in %@" : {
+      "comment" : "Answer notice: when the rated card comes back, such as 4d.",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次回は %@ 後"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 后再次复习"
+          }
+        }
+      }
+    },
     "Next learning card %@" : {
       "comment" : "Finished screen: the time the next learning card comes due today.",
       "localizations" : {

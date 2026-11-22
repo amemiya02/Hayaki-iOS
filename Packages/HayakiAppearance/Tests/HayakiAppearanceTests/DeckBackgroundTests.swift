@@ -27,4 +27,17 @@ struct DeckBackgroundTests {
         try reopened.remove()
         #expect(await reopened.image() == nil)
     }
+
+    @Test func storesAPhotoFromItsBytes() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let png = try #require(Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZskkAAAAASUVORK5CYII="))
+
+        let background = DeckBackground(collectionFolder: folder)
+        try await background.replace(with: png)
+        #expect(await background.image()?.width == 1)
+        await #expect(throws: CocoaError.self) { try await background.replace(with: Data("invalid image".utf8)) }
+        #expect(await background.image()?.width == 1)
+    }
 }

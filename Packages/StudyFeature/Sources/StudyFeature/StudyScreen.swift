@@ -135,14 +135,20 @@ public struct StudyScreen: View {
             if model.state.card != nil, let progress = model.timeboxProgress() { timebox = progress }
         }
         .overlay(alignment: .top) {
-            if let feedback {
-                feedback.label
-                    .padding(8)
-                    .background(.regularMaterial, in: Capsule())
-                    .padding(.top, 60)
-                    .allowsHitTesting(false)
-                    .accessibilityAddTraits(.updatesFrequently)
+            ZStack {
+                if let feedback {
+                    ReviewFeedbackToast(feedback: feedback)
+                        .id(feedback.id)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity).combined(with: .scale(scale: 0.85, anchor: .top)),
+                            removal: .opacity.combined(with: .scale(scale: 0.95, anchor: .top))
+                        ))
+                }
             }
+            .padding(.top, 56)
+            .padding(.horizontal, 24)
+            .allowsHitTesting(false)
+            .animation(.spring(response: 0.36, dampingFraction: 0.78), value: feedback)
         }
         .modifier(TemplateMenuPresentation(selection: $templateMenu, dispatch: dispatch, onSettings: { showingSettings = true }))
         .overlay(alignment: .topLeading) {
@@ -382,6 +388,8 @@ public struct StudyScreen: View {
                 webCommand = ReviewerWebCommand(javascript: "window.ankidroid?.userAction?.(\(number))")
             } else {
                 let typed = typedAnswer
+                let interval = model.showsRatingIntervals
+                    ? command.rating.flatMap { model.state.card?.intervals[$0] } : nil
                 Task {
                     guard await model.perform(command, typed: typed), let rating = command.rating else { return }
                     switch model.leechFeedback {
@@ -390,7 +398,9 @@ public struct StudyScreen: View {
                     case .suspended:
                         feedback = ReviewFeedback(label: Text("Card was a leech and has been suspended.", bundle: .module))
                     case nil:
-                        if preferences.showFeedback { feedback = ReviewFeedback(label: rating.title) }
+                        if preferences.showFeedback {
+                            feedback = ReviewFeedback(label: rating.title, rating: rating, interval: interval)
+                        }
                     }
                 }
             }
@@ -976,6 +986,10 @@ private struct AutoAdvanceTask: Equatable {
 private struct ReviewFeedback: Equatable {
     let id = UUID()
     let label: Text
+    /// The rating just given, when the notice confirms an answer.
+    var rating: Rating?
+    /// The interval that rating scheduled, when intervals show.
+    var interval: String?
     var duration: Duration = .seconds(2)
 
     static func == (lhs: Self, rhs: Self) -> Bool {
@@ -983,7 +997,74 @@ private struct ReviewFeedback: Equatable {
     }
 }
 
+/// A short notice under the navigation bar: the rating just given, in its
+/// colour with the interval it scheduled, or a plain reviewer notice.
+private struct ReviewFeedbackToast: View {
+    let feedback: ReviewFeedback
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: feedback.rating?.symbol ?? "info.circle.fill")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(feedback.rating == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(.white))
+                .frame(width: 30, height: 30)
+                .background {
+                    if feedback.rating != nil {
+                        Circle().fill(tint.gradient)
+                    }
+                }
+                .symbolEffect(.bounce, value: feedback.id)
+            VStack(alignment: .leading, spacing: 0) {
+                feedback.label
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                if let interval = feedback.interval {
+                    Text("Next review in \(interval)", bundle: .module)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .hayakiNumeric()
+                }
+            }
+            .lineLimit(2)
+            .multilineTextAlignment(.leading)
+        }
+        .padding(.leading, feedback.rating == nil ? 12 : 6)
+        .padding(.trailing, 16)
+        .padding(.vertical, 6)
+        .frame(minHeight: 42)
+        .background { surface }
+        .shadow(color: .black.opacity(colorScheme == .dark ? 0.35 : 0.12), radius: 12, y: 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.updatesFrequently)
+    }
+
+    private var tint: Color { feedback.rating?.semanticColor.color ?? .secondary }
+
+    @ViewBuilder
+    private var surface: some View {
+        if reduceTransparency {
+            Capsule().fill(.background.secondary)
+                .overlay(Capsule().strokeBorder(tint.opacity(0.5), lineWidth: 1))
+        } else {
+            Capsule().fill(.clear)
+                .glassEffect(.regular.tint(feedback.rating == nil ? nil : tint.opacity(0.18)), in: .capsule)
+        }
+    }
+}
+
 private extension Rating {
+    /// The mark the answer notice shows for this rating.
+    var symbol: String {
+        switch self {
+        case .again: "arrow.counterclockwise"
+        case .hard: "tortoise.fill"
+        case .good: "checkmark"
+        case .easy: "hare.fill"
+        }
+    }
+
     var reviewerCommand: ReviewerCommand {
         switch self {
         case .again: .rateAgain

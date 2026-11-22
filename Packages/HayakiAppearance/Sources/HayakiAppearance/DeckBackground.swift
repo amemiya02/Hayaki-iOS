@@ -23,8 +23,19 @@ public struct DeckBackground: Sendable {
     public func replace(with url: URL) async throws {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-              let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { throw CocoaError(.fileReadCorruptFile) }
+        try store(source)
+    }
+
+    /// Stores an image's encoded bytes, such as a photo from the library.
+    @concurrent
+    public func replace(with data: Data) async throws {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { throw CocoaError(.fileReadCorruptFile) }
+        try store(source)
+    }
+
+    private func store(_ source: CGImageSource) throws {
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
                   kCGImageSourceCreateThumbnailFromImageAlways: true,
                   kCGImageSourceCreateThumbnailWithTransform: true,
                   kCGImageSourceThumbnailMaxPixelSize: 2048,
