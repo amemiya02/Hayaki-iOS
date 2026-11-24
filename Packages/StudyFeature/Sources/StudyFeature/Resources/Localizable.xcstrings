@@ -4713,6 +4713,78 @@
         "ja": { "stringUnit": { "state": "translated", "value": "スケジュール" } },
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "排程" } }
       }
+    },
+    "RWKV Scheduling": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "RWKV スケジュール" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "RWKV 排程" } }
+      }
+    },
+    "Schedule Reviews with RWKV": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "RWKV で復習を組む" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "用 RWKV 安排复习" } }
+      }
+    },
+    "Review cards come due when an RWKV model predicts that your chance of recalling them has fallen to the deck's desired retention. New and learning cards, and every due date Anki stores, are unchanged, so turning this off returns to your usual schedule at once.": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "RWKV モデルが予測する想起確率がデッキの目標保持率まで下がると、その復習カードが期日になります。新規カード・学習中のカードと、Anki が保存する期日はすべて変わらないため、オフにするとすぐに通常のスケジュールに戻ります。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "RWKV 模型预测你记住某张复习卡的概率降到牌组的目标保留率时，这张卡就到期。新卡、学习中的卡，以及 Anki 存下的所有到期日都不变，所以关掉后会立刻回到平常的排程。" } }
+      }
+    },
+    "The switch syncs with your collection. If another device changes any preference later and syncs first, it can turn the switch back.": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "このスイッチはコレクションと同期します。別の端末が後で設定を変更して先に同期すると、スイッチが戻ることがあります。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "这个开关随集合同步。如果另一台设备之后改了任何偏好设置并先同步，可能会把开关改回去。" } }
+      }
+    },
+    "Turning it on downloads the model (about 430 KB). Its author allows personal and research use.": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "オンにするとモデル（約 430 KB）をダウンロードします。作者は個人利用と研究利用を認めています。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "打开后会下载模型（约 430 KB）。作者允许个人和研究使用。" } }
+      }
+    },
+    "Could Not Change RWKV Scheduling": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "RWKV スケジュールを変更できません" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "无法更改 RWKV 排程" } }
+      }
+    },
+    "Ready. Review cards are chosen by RWKV.": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "準備完了。復習カードは RWKV が選びます。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "已就绪，复习卡由 RWKV 选择。" } }
+      }
+    },
+    "Reading Your Review History": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "復習履歴を読み込み中" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "正在读取复习记录" } }
+      }
+    },
+    "Downloading the Model": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "モデルをダウンロード中" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "正在下载模型" } }
+      }
+    },
+    "RWKV could not start, so reviews use your usual schedule.": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "RWKV を開始できないため、復習は通常のスケジュールです。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "RWKV 无法启动，复习使用平常的排程。" } }
+      }
+    },
+    "Try Again": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "再試行" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "重试" } }
+      }
+    },
+    "Waiting to Start": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "開始待ち" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "等待开始" } }
+      }
     }
   },
   "version" : "1.0"

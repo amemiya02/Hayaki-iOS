@@ -19,6 +19,7 @@ public struct ReviewerSettingsScreen: View {
         Form {
             if let store {
                 SchedulingPreferenceSection(store: store)
+                RwkvSchedulingSection(store: store)
                 ReviewerCollectionSettings(store: store)
             }
             Section(reviewerLocalized("Studying")) {

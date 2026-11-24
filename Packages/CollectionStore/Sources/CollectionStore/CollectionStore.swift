@@ -60,7 +60,10 @@ public final class CollectionStore: Sendable {
             throw CoreError(kind: .ioError, message: error.localizedDescription)
         }
         try await core.openCollection(location.openRequest)
-        return CollectionStore(core: core, location: location)
+        let store = CollectionStore(core: core, location: location)
+        // RWKV scheduling prepares in the background when its switch is on.
+        Task { await store.prepareRwkvIfEnabled() }
+        return store
     }
 
     /// Closes the collection. Nothing may use the store afterwards.
