@@ -9,32 +9,37 @@ import Foundation
 /// preparation and shows the status.
 public enum RwkvScheduling {
     public static let configKey = "hayakiRwkvScheduling"
-    static let weightsName = "rwkv-sm56-weights.int8.bin"
-    static let weightsURL = URL(string: "https://raw.githubusercontent.com/JSchoreels/anki/001440b03395f24ffc1714b18ad3d9d4d89d2067/qt/aqt/rwkv_inference/sm56/weights.int8.bin")!
-    static let weightsSHA256 = "479b3e2bc6a1c900ba8a4a45d629965c6df2a20cc8ff294583f5aeaeea3b4fdd"
-    static let weightsLength = 436_391
 
     /// Shared by every profile, outside the collection folders.
     public static var weightsDirectory: URL {
         URL.applicationSupportDirectory.appending(path: "rwkv", directoryHint: .isDirectory)
     }
 
-    static func isValid(_ data: Data) -> Bool {
-        data.count == weightsLength
-            && SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() == weightsSHA256
+    static func isValid(_ data: Data, _ weights: Anki_ZzHayaki_RwkvWeights) -> Bool {
+        UInt64(data.count) == weights.size
+            && SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() == weights.sha256
     }
 
-    /// Downloads the weights here rather than in the core, so the download
-    /// never holds the core's worker thread.
-    static func ensureWeights() async throws {
-        let file = weightsDirectory.appending(path: weightsName)
-        if let data = try? Data(contentsOf: file), isValid(data) { return }
-        let (data, response) = try await URLSession.shared.data(from: weightsURL)
-        guard (response as? HTTPURLResponse)?.statusCode == 200, isValid(data) else {
+    /// Downloads the chosen model's weights here rather than in the core, so
+    /// the download never holds the core's worker thread.
+    static func ensureWeights(_ weights: Anki_ZzHayaki_RwkvWeights) async throws {
+        let file = weightsDirectory.appending(path: weights.fileName)
+        if let data = try? Data(contentsOf: file), isValid(data, weights) { return }
+        guard let url = URL(string: weights.url) else {
+            throw CoreError(kind: .invalidInput, message: "RWKV weights: invalid URL")
+        }
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard (response as? HTTPURLResponse)?.statusCode == 200, isValid(data, weights) else {
             throw CoreError(kind: .invalidInput, message: "RWKV weights: size or SHA-256 does not match")
         }
         try FileManager.default.createDirectory(at: weightsDirectory, withIntermediateDirectories: true)
-        try data.write(to: file, options: .atomic)
+        let part = file.appendingPathExtension("part")
+        try data.write(to: part)
+        if FileManager.default.fileExists(atPath: file.path(percentEncoded: false)) {
+            _ = try FileManager.default.replaceItemAt(file, withItemAt: part)
+        } else {
+            try FileManager.default.moveItem(at: part, to: file)
+        }
     }
 }
 
@@ -47,7 +52,7 @@ extension CollectionStore {
     /// collection in the background.
     @discardableResult
     public func prepareRwkv() async throws -> Anki_ZzHayaki_RwkvStatusResponse {
-        try await RwkvScheduling.ensureWeights()
+        try await RwkvScheduling.ensureWeights(try await core.rwkvStatus().weights)
         let response = try await core.prepareRwkv(.with { $0.weightsDir = RwkvScheduling.weightsDirectory.path(percentEncoded: false) })
         signal(.studyQueues)
         return response
@@ -61,6 +66,13 @@ extension CollectionStore {
         }
         try await modify(.setConfigJson(request))
         if enabled { try await prepareRwkv() }
+    }
+
+    /// Chooses the model, which syncs with the collection. With the switch on,
+    /// prepares the new model right after.
+    public func setRwkvModel(_ model: Anki_ZzHayaki_RwkvModel) async throws {
+        let status = try await core.setRwkvModel(.with { $0.model = model })
+        if status.enabled { try await prepareRwkv() }
     }
 
     /// Called after the collection opens: with the switch on, preparation

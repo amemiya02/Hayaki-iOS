@@ -4726,22 +4726,46 @@
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "用 RWKV 安排复习" } }
       }
     },
-    "Review cards come due when an RWKV model predicts that your chance of recalling them has fallen to the deck's desired retention. New and learning cards, and every due date Anki stores, are unchanged, so turning this off returns to your usual schedule at once.": {
+    "An RWKV model reads your review history and predicts how likely you are to recall each review card right now. A card comes due when that chance falls to its deck's desired retention, and the cards you are most likely to have forgotten come first. New and learning cards are scheduled as usual. Anki's stored due dates are never changed, so turning this off brings back your usual schedule at once.": {
       "localizations": {
-        "ja": { "stringUnit": { "state": "translated", "value": "RWKV モデルが予測する想起確率がデッキの目標保持率まで下がると、その復習カードが期日になります。新規カード・学習中のカードと、Anki が保存する期日はすべて変わらないため、オフにするとすぐに通常のスケジュールに戻ります。" } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "RWKV 模型预测你记住某张复习卡的概率降到牌组的目标保留率时，这张卡就到期。新卡、学习中的卡，以及 Anki 存下的所有到期日都不变，所以关掉后会立刻回到平常的排程。" } }
+        "ja": { "stringUnit": { "state": "translated", "value": "RWKV モデルが復習履歴から、各復習カードを今思い出せる確率を予測します。その確率がデッキの目標保持率まで下がるとカードが期日になり、忘れている可能性が高いカードから出題されます。新規カードと学習中のカードは通常どおりです。Anki が保存している期日は一切変えないため、オフにするとすぐに通常のスケジュールに戻ります。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "RWKV 模型根据你的复习记录，预测你此刻还记得每张复习卡的概率。概率降到牌组的目标保留率时卡片到期，最可能已经忘掉的卡排在最前。新卡和学习中的卡照常安排。Anki 存下的到期日始终不变，所以关掉后立刻回到平常的排程。" } }
       }
     },
-    "The switch syncs with your collection. If another device changes any preference later and syncs first, it can turn the switch back.": {
+    "Model": {
       "localizations": {
-        "ja": { "stringUnit": { "state": "translated", "value": "このスイッチはコレクションと同期します。別の端末が後で設定を変更して先に同期すると、スイッチが戻ることがあります。" } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "这个开关随集合同步。如果另一台设备之后改了任何偏好设置并先同步，可能会把开关改回去。" } }
+        "ja": { "stringUnit": { "state": "translated", "value": "モデル" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "模型" } }
       }
     },
-    "Turning it on downloads the model (about 430 KB). Its author allows personal and research use.": {
+    "The most accurate. An 11 MB download, about 26 KB of memory per card (about 9 times Small), and about 4 times slower than Small to read your review history.": {
       "localizations": {
-        "ja": { "stringUnit": { "state": "translated", "value": "オンにするとモデル（約 430 KB）をダウンロードします。作者は個人利用と研究利用を認めています。" } },
-        "zh-Hans": { "stringUnit": { "state": "translated", "value": "打开后会下载模型（约 430 KB）。作者允许个人和研究使用。" } }
+        "ja": { "stringUnit": { "state": "translated", "value": "最も正確。ダウンロードは約 11 MB、メモリはカード 1 枚あたり約 26 KB（Small の約 9 倍）、復習履歴の読み込みは Small より約 4 倍遅くなります。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "最准。下载约 11 MB，每张卡占用内存约 26 KB（约为 Small 的 9 倍），读取复习记录比 Small 慢约 4 倍。" } }
+      }
+    },
+    "The default. A 430 KB download and about 3 KB of memory per card.": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "既定。ダウンロードは約 430 KB、メモリはカード 1 枚あたり約 3 KB です。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "默认。下载约 430 KB，每张卡占用内存约 3 KB。" } }
+      }
+    },
+    "A 240 KB download that reads your review history about 1.6 times faster than Small, with about the same memory per card.": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "ダウンロードは約 240 KB、復習履歴の読み込みは Small の約 1.6 倍速く、メモリは Small とほぼ同じです。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "下载约 240 KB，读取复习记录比 Small 快约 1.6 倍，每张卡占用内存与 Small 相近。" } }
+      }
+    },
+    "Choosing another model downloads it if needed and reads your review history again. Until then, reviews use your usual schedule. The choice syncs with your collection.": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "モデルを変えると、必要ならダウンロードしてから復習履歴を読み直します。それまでは通常のスケジュールで復習します。選択はコレクションと同期します。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "换模型时会先下载（已下载的不再下载），再重新读取复习记录，完成前复习使用平常的排程。选择随集合同步。" } }
+      }
+    },
+    "Could Not Change the RWKV Model": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "RWKV モデルを変更できません" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "无法更改 RWKV 模型" } }
       }
     },
     "Could Not Change RWKV Scheduling": {

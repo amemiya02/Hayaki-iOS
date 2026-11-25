@@ -2,43 +2,84 @@ import AnkiProto
 import CollectionStore
 import SwiftUI
 
-/// The RWKV scheduling switch and its status (ADR 0007).
+/// The RWKV scheduling switch, its status and the model choice (ADR 0007).
 struct RwkvSchedulingSection: View {
     let store: CollectionStore
     @State private var status: Anki_ZzHayaki_RwkvStatusResponse?
     @State private var isSaving = false
-    @State private var error: String?
+    @State private var failure: Failure?
+
+    private struct Failure {
+        let title: LocalizedStringKey
+        let message: String
+    }
 
     var body: some View {
-        Section {
-            if let status {
-                Toggle(isOn: Binding(
-                    get: { status.enabled },
-                    set: { setEnabled($0) }
-                )) {
-                    Text("Schedule Reviews with RWKV", bundle: .module)
+        Group {
+            Section {
+                if let status {
+                    Toggle(isOn: Binding(
+                        get: { status.enabled },
+                        set: { setEnabled($0) }
+                    )) {
+                        Text("Schedule Reviews with RWKV", bundle: .module)
+                    }
+                    .disabled(isSaving)
+                    statusRow(status)
+                } else {
+                    ProgressView()
                 }
-                .disabled(isSaving)
-                statusRow(status)
-            } else {
-                ProgressView()
+            } header: {
+                Text("RWKV Scheduling", bundle: .module)
+            } footer: {
+                Text("An RWKV model reads your review history and predicts how likely you are to recall each review card right now. A card comes due when that chance falls to its deck's desired retention, and the cards you are most likely to have forgotten come first. New and learning cards are scheduled as usual. Anki's stored due dates are never changed, so turning this off brings back your usual schedule at once.", bundle: .module)
             }
-        } header: {
-            Text("RWKV Scheduling", bundle: .module)
-        } footer: {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Review cards come due when an RWKV model predicts that your chance of recalling them has fallen to the deck's desired retention. New and learning cards, and every due date Anki stores, are unchanged, so turning this off returns to your usual schedule at once.", bundle: .module)
-                Text("The switch syncs with your collection. If another device changes any preference later and syncs first, it can turn the switch back.", bundle: .module)
-                Text("Turning it on downloads the model (about 430 KB). Its author allows personal and research use.", bundle: .module)
+            if let status {
+                Section {
+                    Picker(selection: Binding(
+                        get: { status.model },
+                        set: { setModel($0) }
+                    )) {
+                        ForEach([Anki_ZzHayaki_RwkvModel.big, .small, .tiny], id: \.self) { model in
+                            optionLabel(model).tag(model)
+                        }
+                    } label: {
+                        Text("Model", bundle: .module)
+                    }
+                    .pickerStyle(.inline)
+                    // The section header already names it.
+                    .labelsHidden()
+                    .disabled(isSaving)
+                } header: {
+                    Text("Model", bundle: .module)
+                } footer: {
+                    Text("Choosing another model downloads it if needed and reads your review history again. Until then, reviews use your usual schedule. The choice syncs with your collection.", bundle: .module)
+                }
             }
         }
         .task { await poll() }
-        .alert(Text("Could Not Change RWKV Scheduling", bundle: .module), isPresented: Binding(
-            get: { error != nil }, set: { if !$0 { error = nil } }
+        .alert(Text(failure?.title ?? "", bundle: .module), isPresented: Binding(
+            get: { failure != nil }, set: { if !$0 { failure = nil } }
         )) {
-            Button(role: .cancel) { error = nil } label: { Text("OK", bundle: .module) }
+            Button(role: .cancel) { failure = nil } label: { Text("OK", bundle: .module) }
         } message: {
-            Text(verbatim: error ?? "")
+            Text(verbatim: failure?.message ?? "")
+        }
+    }
+
+    private func optionLabel(_ model: Anki_ZzHayaki_RwkvModel) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            switch model {
+            case .big:
+                Text(verbatim: "Big")
+                Text("The most accurate. An 11 MB download, about 26 KB of memory per card (about 9 times Small), and about 4 times slower than Small to read your review history.", bundle: .module).font(.footnote).foregroundStyle(.secondary)
+            case .tiny:
+                Text(verbatim: "Tiny")
+                Text("A 240 KB download that reads your review history about 1.6 times faster than Small, with about the same memory per card.", bundle: .module).font(.footnote).foregroundStyle(.secondary)
+            default:
+                Text(verbatim: "Small")
+                Text("The default. A 430 KB download and about 3 KB of memory per card.", bundle: .module).font(.footnote).foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -87,7 +128,21 @@ struct RwkvSchedulingSection: View {
             do {
                 try await store.setRwkvEnabled(enabled)
             } catch {
-                self.error = error.localizedDescription
+                failure = Failure(title: "Could Not Change RWKV Scheduling", message: error.localizedDescription)
+            }
+            status = try? await store.rwkvStatus()
+        }
+    }
+
+    private func setModel(_ model: Anki_ZzHayaki_RwkvModel) {
+        status?.model = model
+        isSaving = true
+        Task {
+            defer { isSaving = false }
+            do {
+                try await store.setRwkvModel(model)
+            } catch {
+                failure = Failure(title: "Could Not Change the RWKV Model", message: error.localizedDescription)
             }
             status = try? await store.rwkvStatus()
         }
@@ -95,7 +150,7 @@ struct RwkvSchedulingSection: View {
 
     private func retry() {
         Task {
-            do { try await store.prepareRwkv() } catch { self.error = error.localizedDescription }
+            do { try await store.prepareRwkv() } catch { failure = Failure(title: "Could Not Change RWKV Scheduling", message: error.localizedDescription) }
             status = try? await store.rwkvStatus()
         }
     }
