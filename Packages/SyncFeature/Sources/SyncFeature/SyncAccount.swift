@@ -69,9 +69,13 @@ public protocol SyncAccountStorage: Sendable {
 }
 
 /// Keeps the sync account, host key included, as one generic password item in
-/// the Keychain, readable only while the device is unlocked and never
-/// migrated to another device by a backup.
+/// the Keychain, never migrated to another device by a backup. It is readable
+/// from the first unlock after a restart, so a sync that continues after the
+/// screen locks or the app moves to the background can still read and update
+/// it.
 public struct KeychainSyncAccountStorage: SyncAccountStorage {
+    static var accessibility: CFString { kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly }
+
     private let service: String
     private let account = "sync-account"
 
@@ -82,22 +86,35 @@ public struct KeychainSyncAccountStorage: SyncAccountStorage {
     public func load() throws -> SyncAccount? {
         var query = baseQuery
         query[kSecReturnData as String] = true
+        query[kSecReturnAttributes as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
         if status == errSecItemNotFound { return nil }
-        guard status == errSecSuccess, let data = item as? Data else { throw KeychainError(status: status) }
+        guard status == errSecSuccess,
+              let attributes = item as? [String: Any],
+              let data = attributes[kSecValueData as String] as? Data
+        else { throw KeychainError(status: status) }
+        // Earlier builds saved the item readable only while unlocked. The
+        // first load, which runs while the app is in use, moves it over.
+        if attributes[kSecAttrAccessible as String] as? String != Self.accessibility as String {
+            let update = [kSecAttrAccessible as String: Self.accessibility]
+            _ = SecItemUpdate(baseQuery as CFDictionary, update as CFDictionary)
+        }
         return try JSONDecoder().decode(SyncAccount.self, from: data)
     }
 
     public func save(_ account: SyncAccount) throws {
         let data = try JSONEncoder().encode(account)
-        let update: [String: Any] = [kSecValueData as String: data]
+        let update: [String: Any] = [
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: Self.accessibility,
+        ]
         let status = SecItemUpdate(baseQuery as CFDictionary, update as CFDictionary)
         if status == errSecItemNotFound {
             var item = baseQuery
             item[kSecValueData as String] = data
-            item[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+            item[kSecAttrAccessible as String] = Self.accessibility
             let added = SecItemAdd(item as CFDictionary, nil)
             guard added == errSecSuccess else { throw KeychainError(status: added) }
         } else if status != errSecSuccess {
