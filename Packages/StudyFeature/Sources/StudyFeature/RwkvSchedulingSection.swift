@@ -6,6 +6,7 @@ import SwiftUI
 struct RwkvSchedulingSection: View {
     let store: CollectionStore
     @State private var status: Anki_ZzHayaki_RwkvStatusResponse?
+    @State private var dailyList = false
     @State private var isSaving = false
     @State private var failure: Failure?
 
@@ -54,6 +55,19 @@ struct RwkvSchedulingSection: View {
                     Text("Model", bundle: .module)
                 } footer: {
                     Text("Choosing another model downloads it if needed and reads your review history again. Until then, reviews use your usual schedule. The choice syncs with your collection.", bundle: .module)
+                }
+                if status.enabled {
+                    Section {
+                        Toggle(isOn: Binding(
+                            get: { dailyList },
+                            set: { setDailyList($0) }
+                        )) {
+                            Text("Keep Today's List", bundle: .module)
+                        }
+                        .disabled(isSaving)
+                    } footer: {
+                        Text("Choose the day's reviews once, at your first study. Cards you finish don't come back until tomorrow.", bundle: .module)
+                    }
                 }
             }
         }
@@ -115,6 +129,7 @@ struct RwkvSchedulingSection: View {
     private func poll() async {
         while !Task.isCancelled {
             status = try? await store.rwkvStatus()
+            if !isSaving, let value = try? await store.rwkvDailyList() { dailyList = value }
             let preparing = status.map { $0.enabled && ($0.state == .preparing || $0.state == .notPrepared) } ?? false
             try? await Task.sleep(for: preparing ? .seconds(1) : .seconds(5))
         }
@@ -131,6 +146,20 @@ struct RwkvSchedulingSection: View {
                 failure = Failure(title: "Could Not Change RWKV Scheduling", message: error.localizedDescription)
             }
             status = try? await store.rwkvStatus()
+        }
+    }
+
+    private func setDailyList(_ enabled: Bool) {
+        dailyList = enabled
+        isSaving = true
+        Task {
+            defer { isSaving = false }
+            do {
+                try await store.setRwkvDailyList(enabled)
+            } catch {
+                failure = Failure(title: "Could Not Change RWKV Scheduling", message: error.localizedDescription)
+            }
+            dailyList = (try? await store.rwkvDailyList()) ?? enabled
         }
     }
 

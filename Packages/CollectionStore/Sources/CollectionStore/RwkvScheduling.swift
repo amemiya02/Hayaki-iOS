@@ -9,6 +9,9 @@ import Foundation
 /// preparation and shows the status.
 public enum RwkvScheduling {
     public static let configKey = "hayakiRwkvScheduling"
+    /// With RWKV scheduling on, choose the day's review cards once at the
+    /// first study of the day. Absent means false.
+    public static let dailyListConfigKey = "hayakiRwkvDailyList"
 
     /// Shared by every profile, outside the collection folders.
     public static var weightsDirectory: URL {
@@ -66,6 +69,27 @@ extension CollectionStore {
         }
         try await modify(.setConfigJson(request))
         if enabled { try await prepareRwkv() }
+    }
+
+    /// Whether RWKV fixes the day's review list at the first study of the day.
+    public func rwkvDailyList() async throws -> Bool {
+        do {
+            let response = try await core.perform(.getConfigJson(.with { $0.val = RwkvScheduling.dailyListConfigKey }))
+            return (try? JSONDecoder().decode(Bool.self, from: response.json)) ?? false
+        } catch where error.kind == .notFoundError {
+            return false
+        }
+    }
+
+    public func setRwkvDailyList(_ enabled: Bool) async throws {
+        let request = Anki_Config_SetConfigJsonRequest.with {
+            $0.key = RwkvScheduling.dailyListConfigKey
+            $0.valueJson = Data((enabled ? "true" : "false").utf8)
+            $0.undoable = false
+        }
+        try await modify(.setConfigJson(request))
+        // A config change carries no study-queue flag, yet the queues and counts depend on it.
+        signal(.studyQueues)
     }
 
     /// Chooses the model, which syncs with the collection. With the switch on,

@@ -4732,6 +4732,18 @@
         "zh-Hans": { "stringUnit": { "state": "translated", "value": "RWKV 模型根据你的复习记录，预测你此刻还记得每张复习卡的概率。概率降到牌组的目标保留率时卡片到期，最可能已经忘掉的卡排在最前。新卡和学习中的卡照常安排。Anki 存下的到期日始终不变，所以关掉后立刻回到平常的排程。" } }
       }
     },
+    "Keep Today's List": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "今日のリストを固定" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "固定每天的复习名单" } }
+      }
+    },
+    "Choose the day's reviews once, at your first study. Cards you finish don't come back until tomorrow.": {
+      "localizations": {
+        "ja": { "stringUnit": { "state": "translated", "value": "その日の復習カードを、最初の学習時に一度だけ選びます。終えたカードは翌日まで戻ってきません。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "每天第一次学习时定下当天要复习的卡，复习完的卡当天不再出现。" } }
+      }
+    },
     "Model": {
       "localizations": {
         "ja": { "stringUnit": { "state": "translated", "value": "モデル" } },

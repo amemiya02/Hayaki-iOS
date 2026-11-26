@@ -95,3 +95,24 @@ struct CollectionStoreTests {
         }
     }
 }
+
+@Suite("RWKV daily list", .timeLimit(.minutes(1)))
+struct RwkvDailyListTests {
+    @Test("The daily-list switch reads false when absent, round-trips, and refreshes study queues")
+    func dailyListSwitch() async throws {
+        try await withTemporaryCollection { store in
+            #expect(try await store.rwkvDailyList() == false)
+
+            let changes = store.changes()
+            try await store.setRwkvDailyList(true)
+            #expect(try await store.rwkvDailyList() == true)
+            var heard = changes.makeAsyncIterator()
+            var all: CollectionChange = []
+            while !all.contains(.studyQueues), let next = await heard.next() { all.formUnion(next) }
+            #expect(all.contains(.studyQueues))
+
+            try await store.setRwkvDailyList(false)
+            #expect(try await store.rwkvDailyList() == false)
+        }
+    }
+}
