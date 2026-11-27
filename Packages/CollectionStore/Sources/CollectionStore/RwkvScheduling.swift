@@ -27,7 +27,9 @@ public enum RwkvScheduling {
     /// the download never holds the core's worker thread.
     static func ensureWeights(_ weights: Anki_ZzHayaki_RwkvWeights) async throws {
         let file = weightsDirectory.appending(path: weights.fileName)
-        if let data = try? Data(contentsOf: file), isValid(data, weights) { return }
+        // The backend verifies the cached bytes when loading the model.
+        if let size = try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize,
+           UInt64(size) == weights.size { return }
         guard let url = URL(string: weights.url) else {
             throw CoreError(kind: .invalidInput, message: "RWKV weights: invalid URL")
         }
@@ -54,9 +56,18 @@ extension CollectionStore {
     /// Downloads the weights if needed and starts preparing the open
     /// collection in the background.
     @discardableResult
-    public func prepareRwkv() async throws -> Anki_ZzHayaki_RwkvStatusResponse {
-        try await RwkvScheduling.ensureWeights(try await core.rwkvStatus().weights)
-        let response = try await core.prepareRwkv(.with { $0.weightsDir = RwkvScheduling.weightsDirectory.path(percentEncoded: false) })
+    @MainActor public func prepareRwkv() async throws -> Anki_ZzHayaki_RwkvStatusResponse {
+        let status = try await core.rwkvStatus()
+        if let current = preparingRwkv, current.model == status.model {
+            return try await current.task.value
+        }
+        let task = Task {
+            try await RwkvScheduling.ensureWeights(status.weights)
+            return try await core.prepareRwkv(.with { $0.weightsDir = RwkvScheduling.weightsDirectory.path(percentEncoded: false) })
+        }
+        preparingRwkv = (status.model, task)
+        defer { if preparingRwkv?.task == task { preparingRwkv = nil } }
+        let response = try await task.value
         signal(.studyQueues)
         return response
     }
@@ -99,12 +110,38 @@ extension CollectionStore {
         if status.enabled { try await prepareRwkv() }
     }
 
-    /// Called after the collection opens: with the switch on, preparation
-    /// starts at once. Study uses the upstream queue until it is ready, so a
-    /// failure here only shows in Settings.
     public func prepareRwkvIfEnabled() async {
-        guard let status = try? await rwkvStatus(), status.enabled,
-              status.state != .ready, status.state != .preparing else { return }
-        _ = try? await prepareRwkv()
+        _ = try? await startRwkvIfNeeded()
+    }
+
+    private func startRwkvIfNeeded() async throws -> Anki_ZzHayaki_RwkvStatusResponse {
+        let status = try await rwkvStatus()
+        if status.enabled && (status.state == .notPrepared || status.state == .failed) {
+            return try await prepareRwkv()
+        }
+        return status
+    }
+
+    /// Read a tree with counts after restoration and any replay triggered by the count itself.
+    public func dueDeckTree() async throws -> Anki_Decks_DeckTreeNode {
+        var status = try await startRwkvIfNeeded()
+        var pollDelayMs = 16
+        while true {
+            try Task.checkCancellation()
+            if !status.enabled || status.state == .ready {
+                let tree = try await core.deckTree(.with { $0.now = Int64(Date().timeIntervalSince1970) })
+                if !status.enabled { return tree }
+                status = try await rwkvStatus()
+                if status.enabled && status.state == .ready { return tree }
+            } else if status.state == .preparing {
+                try await Task.sleep(for: .milliseconds(pollDelayMs))
+                pollDelayMs = min(pollDelayMs * 2, 250)
+                status = try await rwkvStatus()
+            } else if status.state == .notPrepared {
+                status = try await prepareRwkv()
+            } else {
+                throw CoreError(kind: .invalidInput, message: status.error)
+            }
+        }
     }
 }

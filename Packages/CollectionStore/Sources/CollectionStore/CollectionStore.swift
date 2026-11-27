@@ -39,6 +39,7 @@ public final class CollectionStore: Sendable {
         var revision: UInt64 = 0
         var subscribers: [UUID: AsyncStream<CollectionChange>.Continuation] = [:]
     }
+    @MainActor var preparingRwkv: (model: Anki_ZzHayaki_RwkvModel, task: Task<Anki_ZzHayaki_RwkvStatusResponse, any Error>)?
     private let changeState = Mutex(Changes())
 
     /// Advances whenever the store signals a change, even with no subscribers.

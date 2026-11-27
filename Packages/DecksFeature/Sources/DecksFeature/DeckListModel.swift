@@ -119,8 +119,7 @@ public final class DeckListModel {
     /// Reads the deck list and today's counts from the core.
     public func refresh() async {
         do {
-            // Counts are only computed when the request says what "now" is.
-            let root = try await store.core.deckTree(.with { $0.now = Int64(Date().timeIntervalSince1970) })
+            let root = try await store.dueDeckTree()
             let currentDeck = try await store.core.getCurrentDeck()
             // The core groups reviews by the scheduling day and excludes
             // manual rescheduling from Today.
@@ -130,7 +129,8 @@ public final class DeckListModel {
             currentDeckID = currentDeck.id
             state = .loaded
         } catch {
-            state = .failed(message: error.message)
+            guard !Task.isCancelled else { return }
+            state = .failed(message: error.localizedDescription)
         }
     }
 
